@@ -31,6 +31,7 @@ import (
 	platformeshcontext "go.platform-mesh.io/golang-commons/context"
 	"go.platform-mesh.io/golang-commons/sentry"
 	iclient "go.platform-mesh.io/security-operator/internal/client"
+	"go.platform-mesh.io/security-operator/internal/config"
 	"go.platform-mesh.io/security-operator/internal/controller"
 	fga2 "go.platform-mesh.io/security-operator/internal/fga"
 	"go.platform-mesh.io/security-operator/internal/predicates"
@@ -230,6 +231,27 @@ var operatorCmd = &cobra.Command{
 			log.Info().Msg("validating webhooks are enabled")
 			if err := internalwebhook.SetupIdentityProviderConfigurationValidatingWebhookWithManager(ctx, mgr.GetLocalManager(), &operatorCfg); err != nil {
 				log.Error().Err(err).Str("webhook", "IdentityProviderConfiguration").Msg("unable to create webhook")
+				return err
+			}
+			reservedAliases := map[string]struct{}{}
+			if operatorCfg.IDP.SeedConfigFile != "" {
+				seedCfg, err := config.LoadSeedUpstreamConfig(operatorCfg.IDP.SeedConfigFile)
+				if err != nil {
+					log.Error().Err(err).Str("file", operatorCfg.IDP.SeedConfigFile).Msg("loading IDP seed config")
+					return err
+				}
+				reservedAliases = config.ReservedSeedAliases(seedCfg)
+			}
+			if err := internalwebhook.SetupIdPRegistrationValidatingWebhookWithManager(mgr.GetLocalManager(), reservedAliases); err != nil {
+				log.Error().Err(err).Str("webhook", "IdPRegistration").Msg("unable to create webhook")
+				return err
+			}
+			if err := internalwebhook.SetupIdPRegistrationMutatingWebhookWithManager(
+				mgr.GetLocalManager(),
+				kcpClientGetterWithConfig,
+				operatorCfg.IDP.IdPRegistrationSecretNamespace,
+			); err != nil {
+				log.Error().Err(err).Str("webhook", "IdPRegistrationMutating").Msg("unable to create webhook")
 				return err
 			}
 		}

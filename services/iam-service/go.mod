@@ -21,8 +21,8 @@ require (
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.70.0
 	go.opentelemetry.io/otel v1.45.0
 	go.platform-mesh.io/account-operator v0.0.0-20260622214312-00032b10b96f
-	go.platform-mesh.io/apis v0.1.0
-	go.platform-mesh.io/golang-commons v0.19.0
+	go.platform-mesh.io/apis v0.0.3
+	go.platform-mesh.io/golang-commons v0.18.1
 	golang.org/x/oauth2 v0.36.0
 	golang.org/x/sync v0.22.0
 	google.golang.org/grpc v1.83.1
@@ -33,8 +33,13 @@ require (
 )
 
 require (
-	golang.org/x/mod v0.40.0 // indirect
-	golang.org/x/tools v0.49.0 // indirect
+	github.com/Masterminds/semver/v3 v3.5.0 // indirect
+	github.com/evanphx/json-patch v5.9.11+incompatible // indirect
+	github.com/go-errors/errors v1.5.1 // indirect
+	github.com/google/cel-go v0.30.0 // indirect
+	github.com/google/gofuzz v1.2.1-0.20210504230335-f78f29fc09ea // indirect
+	github.com/klauspost/compress v1.18.7 // indirect
+	golang.org/x/exp v0.0.0-20260709172345-9ea1abe57597 // indirect
 )
 
 replace github.com/kcp-dev/multicluster-provider/client => github.com/kcp-dev/multicluster-provider/client v0.8.1-0.20260714141811-833f063357f8
@@ -108,11 +113,11 @@ require (
 	go.opentelemetry.io/otel/sdk v1.45.0 // indirect
 	go.opentelemetry.io/otel/trace v1.45.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.10.0 // indirect
-	go.platform-mesh.io/subroutines v0.7.0 // indirect
+	go.platform-mesh.io/subroutines v0.6.1 // indirect
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/crypto v0.56.0 // indirect
-	golang.org/x/net v0.58.0 // indirect
+	golang.org/x/net v0.57.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/term v0.45.0 // indirect
 	golang.org/x/text v0.41.0 // indirect

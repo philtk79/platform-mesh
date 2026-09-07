@@ -51,7 +51,12 @@ spec:
       crd: {}
   - group: core.platform-mesh.io
     name: identityproviderconfigurations
-    schema: v260622-69fb9437.identityproviderconfigurations.core.platform-mesh.io
+    schema: v260826-dac476ab.identityproviderconfigurations.core.platform-mesh.io
+    storage:
+      crd: {}
+  - group: core.platform-mesh.io
+    name: idpregistrations
+    schema: v260907-08269bea.idpregistrations.core.platform-mesh.io
     storage:
       crd: {}
   - group: core.platform-mesh.io
@@ -61,7 +66,7 @@ spec:
       crd: {}
   - group: core.platform-mesh.io
     name: platformmeshes
-    schema: v260812-3d80609b.platformmeshes.core.platform-mesh.io
+    schema: v260812-dee5e7d9.platformmeshes.core.platform-mesh.io
     storage:
       crd: {}
   - group: core.platform-mesh.io

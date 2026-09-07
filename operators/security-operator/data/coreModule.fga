@@ -1,3 +1,9 @@
+# NOTE: This file is not loaded at runtime. The deployed core FGA module is
+# charts/security-operator/values.yaml (coreModule), mounted as /ln.fga via
+# --core-module-path in the security-operator Helm chart. IdPRegistration
+# permissions (owner-only get/list/watch/create) are defined there.
+# Original file from the security-operator migration (Jul 2025).
+
 module core
 
 type user
