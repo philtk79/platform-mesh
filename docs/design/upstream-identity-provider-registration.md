@@ -24,7 +24,7 @@ The security question is whether letting an org bring its own IdP lets someone b
 
 Concretely, this is what the operator does differently from just accepting the tenant's object:
 
-- **Field allowlist, not a struct copy.** The tenant type is its own type. Operator builds the Keycloak `IdentityProviderRepresentation` field by field from: `alias`, `displayName`, `enabled`, `hideOnLoginPage`, `emailDomainRouting`, `type`, and from the OIDC block only `clientId` plus either `discoveryUrl` (fetched by us) or explicit endpoint URLs. The other ~20 fields on `OIDCUpstreamConfig` — `validateSignatures`, `useJwksUrl`, `validatingPublicKey`, `clientAuthentication`, `forwardedQueryParameters`, the client-assertion set — are never read from tenant input.
+- **Field allowlist, not a struct copy.** The tenant type is its own type. Operator builds the Keycloak `IdentityProviderRepresentation` field by field from: `alias`, `displayName`, `enabled`, `hideOnLoginPage`, `emailDomainRouting`, `type`, and from the OIDC block only `clientId` plus either `discoveryUrl` (fetched by us) or explicit endpoint URLs. The security-relevant knobs that used to sit on `OIDCUpstreamConfig` — `validateSignatures`, `useJwksUrl`, `validatingPublicKey`, `clientAuthentication`, `forwardedQueryParameters`, the client-assertion set — have been removed outright: once IDPC stopped managing upstream providers nothing read them, and a struct that looks configurable but is not invites exactly the wrong assumption.
 - **Signature validation is pinned.** The operator sets `validateSignatures=true` and `useJwksUrl=true` on every broker it writes. A tenant cannot turn signature checking off, and neither can a hostile discovery document.
 - **We fetch discovery, Keycloak doesn't.** The operator resolves the discovery document itself with a hardened HTTP client and passes explicit `issuer` / `authorizationUrl` / `tokenUrl` / `jwksUrl`. `discoveryUrl` never reaches Keycloak. Admission: https only, no RFC1918 or cluster-internal names.
 - **Secret stays in the org workspace.** The CR carries a name-only ref (no namespace to traverse). The operator reads it with a client for the CR's own logical cluster and passes the value to the Keycloak Admin API. It is **not** copied into `root:orgs` and never used as a lookup key there. (If a platform path still needs a secret in `root:orgs` for seed/IDPC, that name is operator-authored: `upstream-idp-<org>-<alias>` — tenant strings never become lookup keys in `root:orgs`.)
@@ -155,7 +155,7 @@ The tenant-facing spec has to be its own type. Copying the struct copies the tru
 - `oidc.clientSecretRef` — **name only**, resolved in the CR's logical cluster
 - `oidc.discoveryUrl` **or** manual `issuer` / `authorizationUrl` / `tokenUrl` / `jwksUrl` (mutually exclusive; discovery preferred)
 
-**Not on the tenant type:** mappers, `trustEmail`, `firstBrokerLoginFlowAlias` / `postBrokerLoginFlowAlias`, `syncMode`, account-linking flags, `validateSignatures`, `useJwksUrl`, validating keys, client-assertion knobs, target org/realm, anything else on `OIDCUpstreamConfig`.
+**Not on the tenant type:** mappers, `trustEmail`, `firstBrokerLoginFlowAlias` / `postBrokerLoginFlowAlias`, `syncMode`, account-linking flags, `validateSignatures`, `useJwksUrl`, validating keys, client-assertion knobs, target org/realm. These are operator constants and are not expressible in the API at all.
 
 **Secret.** Lives in the org workspace. Operator reads it for Keycloak; no tenant-supplied string is a lookup key in `root:orgs`.
 
@@ -209,7 +209,7 @@ Clearing `emailDomainRouting.domains` or deleting the `IdPRegistration` removes 
 
 ## Alias collisions
 
-Seed aliases are reserved at admission (local profile only). Collisions with IDPC-managed or hand-created Keycloak brokers are detected at reconcile time via the `platformMeshManagedBy=idpregistration` provenance marker — the user gets a failed reconcile with a clear error rather than instant admission rejection. That is acceptable: the seed path is for local tryout only.
+Each org gets its own Keycloak realm, so two orgs cannot collide on an alias. Within a realm, seed aliases are reserved at admission (local profile only). A collision with a hand-created or platform-managed broker is detected at reconcile time via the `platformMeshManagedBy=idpregistration` provenance marker: the operator refuses to adopt a broker it does not own and reports it on `status.conditions`. Catching this at admission would mean a Keycloak Admin API call per request, which is not worth it — and the seed path is for local tryout only.
 
 ## Who can write it
 
