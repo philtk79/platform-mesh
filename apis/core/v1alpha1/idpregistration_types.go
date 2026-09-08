@@ -57,9 +57,9 @@ type IdPRegistrationSpec struct {
 	// +kubebuilder:validation:MinLength=1
 	Alias string `json:"alias"`
 
-	DisplayName     string              `json:"displayName,omitempty"`
-	Enabled         *bool               `json:"enabled,omitempty"`
-	HideOnLoginPage *bool               `json:"hideOnLoginPage,omitempty"`
+	DisplayName     string `json:"displayName,omitempty"`
+	Enabled         *bool  `json:"enabled,omitempty"`
+	HideOnLoginPage *bool  `json:"hideOnLoginPage,omitempty"`
 	// EmailDomainRouting enables identity-first login by email domain. See
 	// EmailDomainRouting for destructive update behavior and domain ownership notes.
 	EmailDomainRouting *EmailDomainRouting `json:"emailDomainRouting,omitempty"`

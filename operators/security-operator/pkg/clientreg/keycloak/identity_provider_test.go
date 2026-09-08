@@ -27,70 +27,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	pmcorev1alpha1 "go.platform-mesh.io/apis/core/v1alpha1"
-
-	corev1 "k8s.io/api/core/v1"
 )
-
-func TestToKeycloakIdentityProvider_Discovery(t *testing.T) {
-	rep, err := ToKeycloakIdentityProvider(pmcorev1alpha1.UpstreamIdentityProvider{
-		Alias: "dex",
-		Type:  pmcorev1alpha1.UpstreamIdentityProviderTypeOIDC,
-		OIDC: &pmcorev1alpha1.OIDCUpstreamConfig{
-			DiscoveryURL:         "https://dex.example/.well-known/openid-configuration",
-			ClientID:             "broker",
-			ClientAuthentication: "client_secret_post",
-		},
-	}, "secret")
-	require.NoError(t, err)
-
-	assert.Equal(t, "dex", rep.Alias)
-	assert.Equal(t, "oidc", rep.ProviderID)
-	assert.Equal(t, "broker", rep.Config["clientId"])
-	assert.Equal(t, "secret", rep.Config["clientSecret"])
-	assert.Equal(t, "client_secret_post", rep.Config["clientAuthMethod"])
-	assert.NotContains(t, rep.Config, "authorizationUrl")
-}
-
-func TestToKeycloakIdentityProvider_Manual(t *testing.T) {
-	rep, err := ToKeycloakIdentityProvider(pmcorev1alpha1.UpstreamIdentityProvider{
-		Alias: "manual",
-		Type:  pmcorev1alpha1.UpstreamIdentityProviderTypeOIDC,
-		OIDC: &pmcorev1alpha1.OIDCUpstreamConfig{
-			Issuer:           "https://issuer.example",
-			AuthorizationURL: "https://issuer.example/auth",
-			TokenURL:         "https://issuer.example/token",
-			ClientID:         "broker",
-		},
-	}, "")
-	require.NoError(t, err)
-
-	assert.Equal(t, "https://issuer.example", rep.Config["issuer"])
-	assert.Equal(t, "https://issuer.example/auth", rep.Config["authorizationUrl"])
-	assert.Equal(t, "https://issuer.example/token", rep.Config["tokenUrl"])
-}
-
-func TestToKeycloakIdentityProvider_OrganizationConfig(t *testing.T) {
-	redirect := true
-	hideUnresolved := true
-
-	rep, err := ToKeycloakIdentityProvider(pmcorev1alpha1.UpstreamIdentityProvider{
-		Alias: "dex",
-		Type:  pmcorev1alpha1.UpstreamIdentityProviderTypeOIDC,
-		EmailDomainRouting: &pmcorev1alpha1.EmailDomainRouting{
-			Domains:              []string{"portal.localhost"},
-			AutoRedirect:         &redirect,
-			HideUntilDomainMatch: &hideUnresolved,
-		},
-		OIDC: &pmcorev1alpha1.OIDCUpstreamConfig{
-			DiscoveryURL: "https://dex.example/.well-known/openid-configuration",
-			ClientID:     "broker",
-		},
-	}, "secret")
-	require.NoError(t, err)
-
-	assert.NotContains(t, rep.Config, "kc.org.domain")
-	assert.Empty(t, rep.OrganizationID)
-}
 
 func TestLinkIdentityProviderOrganization(t *testing.T) {
 	redirect := true
@@ -164,10 +101,6 @@ func TestAdminClient_IdentityProviderCRUD(t *testing.T) {
 	var stored IdentityProviderRepresentation
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /admin/realms/test-realm/identity-provider/instances", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode([]IdentityProviderRepresentation{stored})
-	})
 	mux.HandleFunc("GET /admin/realms/test-realm/identity-provider/instances/dex", func(w http.ResponseWriter, r *http.Request) {
 		if stored.Alias == "" {
 			w.WriteHeader(http.StatusNotFound)
@@ -199,18 +132,15 @@ func TestAdminClient_IdentityProviderCRUD(t *testing.T) {
 	client := adminClient(t, srv)
 	ctx := t.Context()
 
-	rep, err := ToKeycloakIdentityProvider(pmcorev1alpha1.UpstreamIdentityProvider{
-		Alias: "dex",
-		Type:  pmcorev1alpha1.UpstreamIdentityProviderTypeOIDC,
-		OIDC: &pmcorev1alpha1.OIDCUpstreamConfig{
-			DiscoveryURL: "https://dex.example/.well-known/openid-configuration",
-			ClientID:     "broker",
-			ClientSecretRef: corev1.SecretReference{
-				Name: "dex-secret",
-			},
+	rep := IdentityProviderRepresentation{
+		Alias:      "dex",
+		ProviderID: "oidc",
+		Enabled:    true,
+		Config: map[string]string{
+			"clientId":     "broker",
+			"clientSecret": "secret",
 		},
-	}, "secret")
-	require.NoError(t, err)
+	}
 
 	require.NoError(t, client.CreateIdentityProvider(ctx, rep))
 
@@ -222,10 +152,10 @@ func TestAdminClient_IdentityProviderCRUD(t *testing.T) {
 	rep.DisplayName = "Dex"
 	require.NoError(t, client.UpdateIdentityProvider(ctx, "dex", rep))
 
-	list, err := client.ListIdentityProviders(ctx)
+	got, err = client.GetIdentityProvider(ctx, "dex")
 	require.NoError(t, err)
-	require.Len(t, list, 1)
-	assert.Equal(t, "Dex", list[0].DisplayName)
+	require.NotNil(t, got)
+	assert.Equal(t, "Dex", got.DisplayName)
 
 	require.NoError(t, client.DeleteIdentityProvider(ctx, "dex"))
 

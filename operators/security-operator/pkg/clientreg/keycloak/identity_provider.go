@@ -22,7 +22,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 
 	pmcorev1alpha1 "go.platform-mesh.io/apis/core/v1alpha1"
@@ -52,32 +51,6 @@ type IdentityProviderRepresentation struct {
 	CaseSensitiveOriginalUsername bool              `json:"caseSensitiveOriginalUsername,omitempty"`
 	AddReadTokenRoleOnCreate      bool              `json:"addReadTokenRoleOnCreate,omitempty"`
 	Config                        map[string]string `json:"config,omitempty"`
-}
-
-func (c *AdminClient) ListIdentityProviders(ctx context.Context) ([]IdentityProviderRepresentation, error) {
-	url := fmt.Sprintf("%s/admin/realms/%s/identity-provider/instances", c.baseURL, c.realm)
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create list identity providers request: %w", err)
-	}
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list identity providers: %w", err)
-	}
-	defer resp.Body.Close() //nolint:errcheck
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, readErrorResponse(resp, "list identity providers")
-	}
-
-	var providers []IdentityProviderRepresentation
-	if err := json.NewDecoder(resp.Body).Decode(&providers); err != nil {
-		return nil, fmt.Errorf("failed to parse identity providers response: %w", err)
-	}
-
-	return providers, nil
 }
 
 func (c *AdminClient) GetIdentityProvider(ctx context.Context, alias string) (*IdentityProviderRepresentation, error) {
@@ -182,110 +155,6 @@ func (c *AdminClient) DeleteIdentityProvider(ctx context.Context, alias string) 
 	return nil
 }
 
-// ToKeycloakIdentityProvider maps an upstream identity provider spec entry
-// to a Keycloak identity provider representation.
-func ToKeycloakIdentityProvider(
-	upstream pmcorev1alpha1.UpstreamIdentityProvider,
-	clientSecret string,
-) (IdentityProviderRepresentation, error) {
-	if upstream.OIDC == nil {
-		return IdentityProviderRepresentation{}, fmt.Errorf("oidc config is required for provider %q", upstream.Alias)
-	}
-
-	rep := IdentityProviderRepresentation{
-		Alias:       upstream.Alias,
-		DisplayName: upstream.DisplayName,
-		ProviderID:  string(upstream.Type),
-		Enabled:     boolPtrOrDefault(upstream.Enabled, true),
-		Config:      map[string]string{},
-	}
-
-	setBoolPtr(&rep.HideOnLogin, upstream.HideOnLoginPage)
-	setBoolPtr(&rep.LinkOnly, upstream.AccountLinkingOnly)
-	setBoolPtr(&rep.StoreToken, upstream.StoreTokens)
-	setBoolPtr(&rep.StoredTokensReadable, upstream.StoredTokensReadable)
-	setBoolPtr(&rep.TrustEmail, upstream.TrustEmail)
-	setBoolPtr(&rep.VerifyEssentialClaim, upstream.VerifyEssentialClaim)
-	setBoolPtr(&rep.CaseSensitiveOriginalUsername, upstream.CaseSensitiveUsername)
-
-	if upstream.GUIOrder != nil {
-		rep.GUIOrder = *upstream.GUIOrder
-	}
-
-	rep.EssentialClaim = upstream.EssentialClaim
-	rep.EssentialClaimValue = upstream.EssentialClaimValue
-	rep.FirstBrokerLoginFlowAlias = upstream.FirstLoginFlow
-	rep.PostBrokerLoginFlowAlias = upstream.PostLoginFlow
-	rep.SyncMode = upstream.SyncMode
-
-	if upstream.ShowInAccountConsole != "" {
-		rep.Config["showInAccountConsole"] = upstream.ShowInAccountConsole
-	}
-
-	oidc := upstream.OIDC
-	cfg := rep.Config
-
-	if oidc.DiscoveryURL == "" {
-		setConfigString(cfg, "issuer", oidc.Issuer)
-		setConfigString(cfg, "authorizationUrl", oidc.AuthorizationURL)
-		setConfigString(cfg, "tokenUrl", oidc.TokenURL)
-	}
-
-	setConfigString(cfg, "logoutUrl", oidc.LogoutURL)
-	setConfigString(cfg, "userInfoUrl", oidc.UserInfoURL)
-	setConfigString(cfg, "clientId", oidc.ClientID)
-	setConfigString(cfg, "clientSecret", clientSecret)
-	setConfigString(cfg, "clientAuthMethod", oidc.ClientAuthentication)
-	setConfigString(cfg, "clientAssertionSigningAlg", oidc.ClientAssertionSignatureAlgorithm)
-	setConfigString(cfg, "clientAssertionAudience", oidc.ClientAssertionAudience)
-	setConfigString(cfg, "defaultScope", oidc.DefaultScopes)
-	setConfigString(cfg, "prompt", oidc.Prompt)
-	setConfigString(cfg, "jwksUrl", oidc.JWKSURL)
-	setConfigString(cfg, "publicKeySignatureVerifier", oidc.ValidatingPublicKey)
-	setConfigString(cfg, "publicKeySignatureVerifierKeyId", oidc.ValidatingPublicKeyID)
-	setConfigString(cfg, "forwardParameters", oidc.ForwardedQueryParameters)
-
-	setConfigBoolPtr(cfg, "backchannelSupported", oidc.BackchannelLogout)
-	setConfigBoolPtr(cfg, "acceptsPromptNoneForwardFromClient", oidc.AcceptsPromptNoneForwardFromClient)
-	setConfigBoolPtr(cfg, "shortStateParameter", oidc.RequiresShortStateParameter)
-	setConfigBoolPtr(cfg, "validateSignature", oidc.ValidateSignatures)
-	setConfigBoolPtr(cfg, "useJwksUrl", oidc.UseJWKSURL)
-	setConfigBoolPtr(cfg, "supportsClientAssertions", oidc.SupportsClientAssertions)
-	setConfigBoolPtr(cfg, "allowClientAssertionsReuse", oidc.AllowsClientAssertionsReused)
-	setConfigBoolPtr(cfg, "allowClientIdAsAudienceForClientAssertion", oidc.AllowsClientIDAsAudienceForAssertions)
-
-	return rep, nil
-}
-
-// MergeIdentityProviderSpec copies spec-driven fields from src onto dst, preserving
-// dst.Alias and merging config entries from src.
-func MergeIdentityProviderSpec(dst *IdentityProviderRepresentation, src IdentityProviderRepresentation) {
-	dst.DisplayName = src.DisplayName
-	dst.ProviderID = src.ProviderID
-	dst.Enabled = src.Enabled
-	dst.HideOnLogin = src.HideOnLogin
-	dst.LinkOnly = src.LinkOnly
-	dst.StoreToken = src.StoreToken
-	dst.StoredTokensReadable = src.StoredTokensReadable
-	dst.TrustEmail = src.TrustEmail
-	dst.GUIOrder = src.GUIOrder
-	dst.VerifyEssentialClaim = src.VerifyEssentialClaim
-	dst.EssentialClaim = src.EssentialClaim
-	dst.EssentialClaimValue = src.EssentialClaimValue
-	dst.FirstBrokerLoginFlowAlias = src.FirstBrokerLoginFlowAlias
-	dst.PostBrokerLoginFlowAlias = src.PostBrokerLoginFlowAlias
-	dst.SyncMode = src.SyncMode
-	dst.CaseSensitiveOriginalUsername = src.CaseSensitiveOriginalUsername
-	dst.AddReadTokenRoleOnCreate = src.AddReadTokenRoleOnCreate
-
-	if dst.Config == nil {
-		dst.Config = map[string]string{}
-	}
-	for key, value := range src.Config {
-		dst.Config[key] = value
-	}
-}
-
 // ClearOrganizationBrokerConfig removes Keycloak organization linkage from a broker.
 func ClearOrganizationBrokerConfig(rep *IdentityProviderRepresentation) {
 	rep.OrganizationID = ""
@@ -350,11 +219,5 @@ func setBoolPtr(dst *bool, src *bool) {
 func setConfigString(cfg map[string]string, key, value string) {
 	if value != "" {
 		cfg[key] = value
-	}
-}
-
-func setConfigBoolPtr(cfg map[string]string, key string, src *bool) {
-	if src != nil {
-		cfg[key] = strconv.FormatBool(*src)
 	}
 }

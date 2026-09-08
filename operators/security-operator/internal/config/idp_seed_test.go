@@ -41,7 +41,6 @@ seedUpstreamIdentityProviders:
       oidc:
         discoveryUrl: https://portal.localhost:8443/dex/.well-known/openid-configuration
         clientId: keycloak-broker
-        clientAuthentication: client_secret_post
 `), 0o600)
 	require.NoError(t, err)
 
@@ -56,7 +55,7 @@ seedUpstreamIdentityProviders:
 	assert.Equal(t, "dex", provider.Alias)
 	assert.Equal(t, "local-dev-broker-secret", provider.ClientSecret)
 	assert.Equal(t, "keycloak-broker", provider.OIDC.ClientID)
-	assert.Equal(t, "client_secret_post", provider.OIDC.ClientAuthentication)
+	assert.Equal(t, "https://portal.localhost:8443/dex/.well-known/openid-configuration", provider.OIDC.DiscoveryURL)
 
 	reg, err := provider.ToIdPRegistration()
 	require.NoError(t, err)
