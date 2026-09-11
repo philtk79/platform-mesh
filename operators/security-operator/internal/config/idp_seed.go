@@ -40,11 +40,29 @@ type SeedUpstreamIdentityProviders struct {
 	Providers []SeedUpstreamIdentityProvider `json:"providers"`
 }
 
-// SeedUpstreamIdentityProvider reuses UpstreamIdentityProvider fields and adds
-// a plaintext client secret for local seeding only.
+// SeedOIDCConfig is the seed-file OIDC block. It matches IdPRegistrationOIDCConfig
+// minus clientSecretRef (generated) and clientSecret (top-level on the provider).
+type SeedOIDCConfig struct {
+	ClientID         string `json:"clientId"`
+	DiscoveryURL     string `json:"discoveryUrl,omitempty"`
+	Issuer           string `json:"issuer,omitempty"`
+	AuthorizationURL string `json:"authorizationUrl,omitempty"`
+	TokenURL         string `json:"tokenUrl,omitempty"`
+	JWKSURL          string `json:"jwksUrl,omitempty"`
+}
+
+// SeedUpstreamIdentityProvider is the local-profile seed entry for one upstream
+// IdP. YAML shape is unchanged; fields live here because they are not on
+// IdentityProviderConfiguration.
 type SeedUpstreamIdentityProvider struct {
-	pmcorev1alpha1.UpstreamIdentityProvider `json:",inline"`
-	ClientSecret                            string `json:"clientSecret"`
+	Alias              string                                      `json:"alias"`
+	DisplayName        string                                      `json:"displayName,omitempty"`
+	Enabled            *bool                                       `json:"enabled,omitempty"`
+	HideOnLoginPage    *bool                                       `json:"hideOnLoginPage,omitempty"`
+	EmailDomainRouting *pmcorev1alpha1.EmailDomainRouting          `json:"emailDomainRouting,omitempty"`
+	Type               pmcorev1alpha1.UpstreamIdentityProviderType `json:"type,omitempty"`
+	OIDC               *SeedOIDCConfig                             `json:"oidc"`
+	ClientSecret       string                                      `json:"clientSecret"`
 }
 
 func LoadSeedUpstreamConfig(path string) (*SeedUpstreamConfig, error) {

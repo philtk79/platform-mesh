@@ -69,7 +69,7 @@ func TestAllowsSeedingForRealmEmptyRealmsAllowsNone(t *testing.T) {
 		SeedUpstreamIdentityProviders: SeedUpstreamIdentityProviders{
 			Realms: nil,
 			Providers: []SeedUpstreamIdentityProvider{{
-				UpstreamIdentityProvider: pmcorev1alpha1.UpstreamIdentityProvider{Alias: "dex"},
+				Alias: "dex",
 			}},
 		},
 	}
