@@ -26,7 +26,7 @@ func TestIsBlockedHost(t *testing.T) {
 	t.Parallel()
 
 	assert.True(t, IsBlockedHost("localhost"))
-	assert.True(t, IsBlockedHost("metadata.google.internal"))
+	assert.True(t, IsBlockedHost("foo.internal"))
 	assert.True(t, IsBlockedHost("10.0.0.1"))
 	assert.True(t, IsBlockedHost("100.64.0.1"))
 	assert.True(t, IsBlockedHost("0.0.0.0"))

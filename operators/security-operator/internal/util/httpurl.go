@@ -32,9 +32,6 @@ func IsBlockedHost(host string) bool {
 	if host == "" || host == "localhost" || host == "0.0.0.0" || host == "::" {
 		return true
 	}
-	if host == "metadata.google.internal" {
-		return true
-	}
 	if strings.HasSuffix(host, ".local") || strings.HasSuffix(host, ".internal") {
 		return true
 	}
