@@ -245,7 +245,6 @@ func (s *subroutine) reconcileBroker(
 		return "", nil, fmt.Errorf("loading identity provider after sync: %w", err)
 	}
 
-	upstream := keycloak.RegistrationToUpstream(*reg)
 	var domains []string
 	if reg.Spec.EmailDomainRouting != nil {
 		domains = util.NormalizeEmailDomains(reg.Spec.EmailDomainRouting.Domains)
@@ -283,7 +282,7 @@ func (s *subroutine) reconcileBroker(
 		return "", nil, fmt.Errorf("ensuring keycloak organization: %w", err)
 	}
 
-	keycloak.LinkIdentityProviderOrganization(current, org.ID, upstream)
+	keycloak.LinkIdentityProviderOrganization(current, org.ID, reg.Spec.EmailDomainRouting, reg.Spec.HideOnLoginPage)
 	if err := adminClient.UpdateIdentityProvider(ctx, reg.Spec.Alias, *current); err != nil {
 		return "", nil, fmt.Errorf("linking identity provider to organization: %w", err)
 	}
