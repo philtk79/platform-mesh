@@ -35,6 +35,7 @@ const (
 
 type KeycloakConfig struct {
 	BaseURL      string
+	PathPrefix   string
 	ClientID     string
 	ClientSecret string
 }
@@ -144,6 +145,7 @@ func NewConfig() Config {
 			AccessTokenLifespan:            28800,
 		},
 		Keycloak: KeycloakConfig{
+			PathPrefix:   "/keycloak",
 			ClientID:     "security-operator",
 			ClientSecret: os.Getenv("KEYCLOAK_CLIENT_SECRET"),
 		},
@@ -197,6 +199,7 @@ func (c *Config) AddFlags(fs *pflag.FlagSet) {
 	fs.IntVar(&c.IDP.AccessTokenLifespan, "idp-access-token-lifespan", c.IDP.AccessTokenLifespan, "Keycloak access token lifespan in seconds")
 	fs.BoolVar(&c.IDP.RegistrationAllowed, "idp-registration-allowed", c.IDP.RegistrationAllowed, "Enable Keycloak self-registration")
 	fs.StringVar(&c.Keycloak.BaseURL, "keycloak-base-url", c.Keycloak.BaseURL, "Set Keycloak base URL")
+	fs.StringVar(&c.Keycloak.PathPrefix, "keycloak-path-prefix", c.Keycloak.PathPrefix, "HTTP path prefix for Keycloak broker redirect URIs")
 	fs.StringVar(&c.Keycloak.ClientID, "keycloak-client-id", c.Keycloak.ClientID, "Set Keycloak client ID")
 	fs.BoolVar(&c.Initializer.WorkspaceInitializerEnabled, "initializer-workspace-enabled", c.Initializer.WorkspaceInitializerEnabled, "Enable workspace initialization")
 	fs.BoolVar(&c.Initializer.IDPEnabled, "initializer-idp-enabled", c.Initializer.IDPEnabled, "Enable IDP initialization")
