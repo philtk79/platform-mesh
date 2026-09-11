@@ -40,14 +40,11 @@ func TestLinkIdentityProviderOrganization(t *testing.T) {
 		},
 	}
 
-	LinkIdentityProviderOrganization(&rep, "org-1", pmcorev1alpha1.UpstreamIdentityProvider{
-		Alias: "dex",
-		EmailDomainRouting: &pmcorev1alpha1.EmailDomainRouting{
-			Domains:              []string{"portal.localhost"},
-			AutoRedirect:         &redirect,
-			HideUntilDomainMatch: &hideUnresolved,
-		},
-	})
+	LinkIdentityProviderOrganization(&rep, "org-1", &pmcorev1alpha1.EmailDomainRouting{
+		Domains:              []string{"portal.localhost"},
+		AutoRedirect:         &redirect,
+		HideUntilDomainMatch: &hideUnresolved,
+	}, nil)
 
 	assert.True(t, rep.HideOnLogin)
 	assert.Equal(t, "org-1", rep.OrganizationID)
@@ -84,13 +81,10 @@ func TestLinkIdentityProviderOrganization_DisabledRedirect(t *testing.T) {
 		},
 	}
 
-	LinkIdentityProviderOrganization(&rep, "org-1", pmcorev1alpha1.UpstreamIdentityProvider{
-		Alias: "dex",
-		EmailDomainRouting: &pmcorev1alpha1.EmailDomainRouting{
-			Domains:      []string{"portal.localhost"},
-			AutoRedirect: &redirect,
-		},
-	})
+	LinkIdentityProviderOrganization(&rep, "org-1", &pmcorev1alpha1.EmailDomainRouting{
+		Domains:      []string{"portal.localhost"},
+		AutoRedirect: &redirect,
+	}, nil)
 
 	assert.Equal(t, "org-1", rep.OrganizationID)
 	assert.Equal(t, "portal.localhost", rep.Config["kc.org.domain"])

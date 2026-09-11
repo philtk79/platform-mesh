@@ -116,18 +116,6 @@ func SyncIdentityProviderSpec(dst *IdentityProviderRepresentation, desired Ident
 	dst.OrganizationID = orgID
 }
 
-func RegistrationToUpstream(reg pmcorev1alpha1.IdPRegistration) pmcorev1alpha1.UpstreamIdentityProvider {
-	up := pmcorev1alpha1.UpstreamIdentityProvider{
-		Alias:              reg.Spec.Alias,
-		DisplayName:        reg.Spec.DisplayName,
-		Enabled:            reg.Spec.Enabled,
-		HideOnLoginPage:    reg.Spec.HideOnLoginPage,
-		EmailDomainRouting: reg.Spec.EmailDomainRouting,
-		Type:               reg.Spec.Type,
-	}
-	return up
-}
-
 // BrokerRedirectURI returns the OAuth redirect URI tenants must allow at the upstream IdP.
 func BrokerRedirectURI(baseDomain, keycloakPathPrefix, realm, alias string) string {
 	baseDomain = strings.TrimSpace(strings.TrimSuffix(baseDomain, "/"))

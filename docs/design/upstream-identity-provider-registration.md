@@ -110,10 +110,9 @@ What has to stay true for the above:
 
 ## Problem
 
-- IDPC lives in `root:orgs` (protected). Only security-operator writes it; it reconciles to Keycloak.
-- Upstream IdP fields already exist on IDPC (`spec.upstreamIdentityProviders`) and the operator reconciles them, but only platform admins can set them today (admin kubeconfig or the local-setup dex script).
-- Portal UI to configure upstream IdPs is planned, but blocked on the backend: the UI talks to GraphQL in `root:orgs:<org>`, and org owners can't write IDPC there. Without an intent CR in the org workspace, the UI has nothing to call.
-- We can't just grant org owners patch on IDPC in `root:orgs`. That object also has platform-managed clients, realm flags, etc., not something you want tenants editing directly.
+- IDPC lives in `root:orgs` (protected). Only security-operator writes it; it reconciles platform-managed realm bits (clients, seed/local Dex, flags) to Keycloak. It has no tenant upstream-IdP fields.
+- Org owners cannot write IDPC, and we must not grant them patch on it: that object also has platform-managed clients and realm flags.
+- Portal UI to configure upstream IdPs is planned, but blocked on the backend: the UI talks to GraphQL in `root:orgs:<org>`. Without an intent CR in the org workspace, the UI has nothing to call.
 - Org owners already work in `root:orgs:<org>` through Portal → GraphQL (user token + FGA). Upstream IdP config needs to live there too.
 - Without a separate intent object there's no clean per-org delete, no FGA on the write path, and nothing useful in audit logs.
 

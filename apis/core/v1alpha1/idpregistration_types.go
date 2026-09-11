@@ -22,6 +22,38 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type UpstreamIdentityProviderType string
+
+const (
+	UpstreamIdentityProviderTypeOIDC UpstreamIdentityProviderType = "oidc"
+)
+
+// EmailDomainRouting configures email-domain based identity-first login for an
+// upstream identity provider: users are routed to the provider based on their
+// email domain. The security-operator maps it onto the concrete backend (for
+// Keycloak: Organizations and the kc.org.* broker settings).
+//
+// Warning: removing all domains or deleting the IdPRegistration clears the
+// broker's organization linkage and deletes the linked Keycloak organization.
+// That organization may be shared if multiple upstream IdPs reference the same
+// domains.
+//
+// Domain ownership is not verified at admission time. A future release may
+// require org owners to prove control of a domain before it can be linked.
+type EmailDomainRouting struct {
+	// Domains lists the email domains routed to this upstream IdP. Each entry is
+	// normalized to lowercase. Org owners should only add domains their organization
+	// controls; verification is not enforced yet.
+	// +kubebuilder:validation:MinItems=1
+	Domains []string `json:"domains"`
+	// AutoRedirect immediately sends users whose email domain matches straight to
+	// this upstream IdP instead of showing the provider-selection screen.
+	AutoRedirect *bool `json:"autoRedirect,omitempty"`
+	// HideUntilDomainMatch hides this upstream IdP on the login page until a
+	// matching email domain routes a user to it.
+	HideUntilDomainMatch *bool `json:"hideUntilDomainMatch,omitempty"`
+}
+
 // IdPRegistrationSecretRef references a Secret in the same logical cluster as the
 // IdPRegistration. Only the name is accepted — no namespace field to traverse.
 type IdPRegistrationSecretRef struct {

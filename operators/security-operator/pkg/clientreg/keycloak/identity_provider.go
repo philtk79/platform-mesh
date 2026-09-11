@@ -167,15 +167,15 @@ func ClearOrganizationBrokerConfig(rep *IdentityProviderRepresentation) {
 }
 
 // LinkIdentityProviderOrganization sets the Keycloak organization linkage on a
-// broker representation, or clears it when the upstream defines no email domains.
+// broker representation, or clears it when no email domains are configured.
 func LinkIdentityProviderOrganization(
 	rep *IdentityProviderRepresentation,
 	organizationID string,
-	upstream pmcorev1alpha1.UpstreamIdentityProvider,
+	routing *pmcorev1alpha1.EmailDomainRouting,
+	hideOnLoginPage *bool,
 ) {
 	ClearOrganizationBrokerConfig(rep)
 
-	routing := upstream.EmailDomainRouting
 	if routing == nil {
 		return
 	}
@@ -193,7 +193,7 @@ func LinkIdentityProviderOrganization(
 
 	if boolPtrOrDefault(routing.AutoRedirect, false) {
 		setConfigString(rep.Config, "kc.org.broker.redirect.mode.email-matches", "true")
-		if upstream.HideOnLoginPage == nil {
+		if hideOnLoginPage == nil {
 			rep.HideOnLogin = true
 		}
 	}

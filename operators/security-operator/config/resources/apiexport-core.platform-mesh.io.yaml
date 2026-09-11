@@ -40,7 +40,7 @@ spec:
       crd: {}
   - group: core.platform-mesh.io
     name: identityproviderconfigurations
-    schema: v260826-dac476ab.identityproviderconfigurations.core.platform-mesh.io
+    schema: v260217-2c67392.identityproviderconfigurations.core.platform-mesh.io
     storage:
       crd: {}
   - group: core.platform-mesh.io
