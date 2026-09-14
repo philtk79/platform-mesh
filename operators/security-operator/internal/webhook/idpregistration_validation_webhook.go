@@ -51,6 +51,9 @@ func (v *idpRegistrationValidator) ValidateUpdate(_ context.Context, oldObj, new
 	if strings.TrimSpace(oldObj.Spec.Alias) != strings.TrimSpace(newObj.Spec.Alias) {
 		return nil, fmt.Errorf("spec.alias is immutable")
 	}
+	if oldObj.Spec.Type != newObj.Spec.Type {
+		return nil, fmt.Errorf("spec.type is immutable")
+	}
 	return nil, validateIdPRegistration(newObj)
 }
 

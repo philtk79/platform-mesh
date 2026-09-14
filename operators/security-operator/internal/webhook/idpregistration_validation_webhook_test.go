@@ -96,3 +96,83 @@ func TestValidateIdPRegistration(t *testing.T) {
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "metadata.name")
 }
+
+func TestIdPRegistrationValidator_ValidateUpdate(t *testing.T) {
+	t.Parallel()
+
+	enabled := true
+	valid := &pmcorev1alpha1.IdPRegistration{
+		ObjectMeta: metav1.ObjectMeta{Name: "corp"},
+		Spec: pmcorev1alpha1.IdPRegistrationSpec{
+			Alias:       "corp",
+			DisplayName: "Corp IdP",
+			Enabled:     &enabled,
+			Type:        pmcorev1alpha1.UpstreamIdentityProviderTypeOIDC,
+			OIDC: &pmcorev1alpha1.IdPRegistrationOIDCConfig{
+				ClientID: "client",
+				ClientSecretRef: pmcorev1alpha1.IdPRegistrationSecretRef{
+					Name: "upstream-secret",
+				},
+				DiscoveryURL: "https://idp.example.com/.well-known/openid-configuration",
+			},
+		},
+	}
+
+	tests := []struct {
+		name            string
+		mutate          func(*pmcorev1alpha1.IdPRegistration)
+		wantErrContains string
+	}{
+		{
+			name: "rejects alias change",
+			mutate: func(reg *pmcorev1alpha1.IdPRegistration) {
+				reg.Spec.Alias = "other"
+			},
+			wantErrContains: "spec.alias is immutable",
+		},
+		{
+			name: "rejects type change",
+			mutate: func(reg *pmcorev1alpha1.IdPRegistration) {
+				reg.Spec.Type = "saml"
+			},
+			wantErrContains: "spec.type is immutable",
+		},
+		{
+			name: "allows displayName change",
+			mutate: func(reg *pmcorev1alpha1.IdPRegistration) {
+				reg.Spec.DisplayName = "Updated Corp IdP"
+			},
+		},
+		{
+			name: "allows enabled change",
+			mutate: func(reg *pmcorev1alpha1.IdPRegistration) {
+				disabled := false
+				reg.Spec.Enabled = &disabled
+			},
+		},
+		{
+			name: "allows OIDC endpoint change",
+			mutate: func(reg *pmcorev1alpha1.IdPRegistration) {
+				reg.Spec.OIDC.DiscoveryURL = "https://idp.example.com/realms/corp/.well-known/openid-configuration"
+			},
+		},
+	}
+
+	v := &idpRegistrationValidator{}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			newObj := valid.DeepCopy()
+			tt.mutate(newObj)
+
+			_, err := v.ValidateUpdate(t.Context(), valid.DeepCopy(), newObj)
+			if tt.wantErrContains != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.wantErrContains)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
