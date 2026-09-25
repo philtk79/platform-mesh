@@ -81,6 +81,10 @@ func TestIdPRegistrationDefaulter_Default_persistsSecretAndSetsRef(t *testing.T)
 		Namespace: "default",
 	}, secret))
 	assert.Equal(t, "super-secret", string(secret.Data[idpRegistrationSecretDataKey]))
+
+	ns := &corev1.Namespace{}
+	require.NoError(t, cl.Get(context.Background(), ctrlruntimeclient.ObjectKey{Name: "default"}, ns))
+	assert.Equal(t, "default", ns.Name)
 }
 
 func TestIdPRegistrationDefaulter_Default_updatesExistingSecret(t *testing.T) {

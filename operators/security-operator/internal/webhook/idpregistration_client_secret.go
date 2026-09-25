@@ -21,6 +21,8 @@ import (
 	"fmt"
 	"strings"
 
+	"go.platform-mesh.io/security-operator/internal/util"
+
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -46,6 +48,9 @@ func upsertClientSecret(
 ) error {
 	if strings.TrimSpace(secretNamespace) == "" {
 		secretNamespace = "default"
+	}
+	if err := util.EnsureNamespace(ctx, cl, secretNamespace); err != nil {
+		return err
 	}
 	key := ctrlruntimeclient.ObjectKey{Name: secretName, Namespace: secretNamespace}
 

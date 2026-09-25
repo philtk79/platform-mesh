@@ -28,6 +28,7 @@ import (
 const (
 	CoreProviderName      = "core"
 	SystemProviderName    = "system"
+	OrgIdpProviderName    = "org-idp"
 	ProvidersProviderName = "providers"
 	providerSeparator     = "#"
 	OrgsClusterPath       = "root:orgs"
@@ -89,6 +90,7 @@ type IDPConfig struct {
 type APIExportEndpointSlices struct {
 	CorePlatformMeshIO      string
 	SystemPlatformMeshIO    string
+	OrgIdpPlatformMeshIO    string
 	ProvidersPlatformMeshIO string
 }
 
@@ -131,6 +133,7 @@ func NewConfig() Config {
 		APIExportEndpointSlices: APIExportEndpointSlices{
 			CorePlatformMeshIO:      "core.platform-mesh.io",
 			SystemPlatformMeshIO:    "system.platform-mesh.io",
+			OrgIdpPlatformMeshIO:    "org-idp.platform-mesh.io",
 			ProvidersPlatformMeshIO: "providers.platform-mesh.io",
 		},
 		BaseDomain:               "portal.dev.local:8443",
@@ -171,6 +174,7 @@ func (c *Config) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.KCP.Kubeconfig, "kcp-kubeconfig", c.KCP.Kubeconfig, "Set the kcp kubeconfig path")
 	fs.StringVar(&c.APIExportEndpointSlices.CorePlatformMeshIO, "api-export-endpoint-slice-name", c.APIExportEndpointSlices.CorePlatformMeshIO, "Set the core.platform-mesh.io APIExportEndpointSlice name")
 	fs.StringVar(&c.APIExportEndpointSlices.SystemPlatformMeshIO, "system-api-export-endpoint-slice-name", c.APIExportEndpointSlices.SystemPlatformMeshIO, "Set the system.platform-mesh.io APIExportEndpointSlice name")
+	fs.StringVar(&c.APIExportEndpointSlices.OrgIdpPlatformMeshIO, "org-idp-api-export-endpoint-slice-name", c.APIExportEndpointSlices.OrgIdpPlatformMeshIO, "Set the org-idp.platform-mesh.io APIExportEndpointSlice name")
 	fs.StringVar(&c.APIExportEndpointSlices.ProvidersPlatformMeshIO, "providers-api-export-endpoint-slice-name", c.APIExportEndpointSlices.ProvidersPlatformMeshIO, "Set the providers.platform-mesh.io APIExportEndpointSlice name")
 	fs.StringVar(&c.CoreModulePath, "core-module-path", c.CoreModulePath, "Set the path to the core module FGA model file")
 	fs.StringVar(&c.BaseDomain, "base-domain", c.BaseDomain, "Set the base domain used to construct issuer URLs")

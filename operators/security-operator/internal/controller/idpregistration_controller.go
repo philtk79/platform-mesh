@@ -101,7 +101,7 @@ func (r *IdPRegistrationReconciler) SetupWithManager(mgr mcmanager.Manager, cfg 
 	return mcbuilder.ControllerManagedBy(mgr).
 		Named("idpregistration").
 		For(&pmcorev1alpha1.IdPRegistration{}, mcbuilder.WithClusterFilter(func(clusterName multicluster.ClusterName, _ cluster.Cluster) bool {
-			return strings.HasPrefix(string(clusterName), config.CoreProviderName)
+			return strings.HasPrefix(string(clusterName), config.OrgIdpProviderName)
 		})).
 		WithOptions(opts).
 		WithEventFilter(predicate.And(predicates...)).

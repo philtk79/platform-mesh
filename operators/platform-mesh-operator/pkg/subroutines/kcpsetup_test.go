@@ -616,6 +616,14 @@ users:
 			return nil
 		})
 
+	mockKcpClient.EXPECT().
+		Get(mock.Anything, types.NamespacedName{Name: "core.platform-mesh.io"}, mock.AnythingOfType("*v1alpha1.APIExport")).
+		RunAndReturn(func(ctx context.Context, nn types.NamespacedName, obj ctrlruntimeclient.Object, opts ...ctrlruntimeclient.GetOption) error {
+			export := obj.(*kcpapiv1alpha.APIExport)
+			export.Status = apiexport.Status
+			return nil
+		})
+
 	// Mock workspace lookups and patch calls
 	mockKcpClient.EXPECT().
 		Get(mock.Anything, mock.Anything, mock.AnythingOfType("*v1alpha1.Workspace")).

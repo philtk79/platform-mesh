@@ -13,6 +13,7 @@ Same idea as `APIExportPolicy`: actor writes intent in a workspace they own, sec
 5. **Topology:** N OIDC brokers on the org Keycloak realm (not “one upstream + external federation hub”). Boris’ offload option: considered, rejected for Portal self-service + identity-first routing.
 6. **Priority:** implement **Upstream IdP** (`IdPRegistration`) first — not `ClientRegistration`.
 7. **Docs:** this design doc wins over older RFC wording (`verbatim`, Phase-1-only, IDPC merge). RFCs to be aligned to this.
+8. **API export:** `idpregistrations` is served from `org-idp.platform-mesh.io`, bound only on the `org` WorkspaceType — not on `core.platform-mesh.io`, not on `orgs` or `account`. The type must not appear at `root:orgs`. The org-idp export claims org-local `secrets` (label `core.platform-mesh.io/idpregistration`) and `accountinfos` (via core identity hash) for reconcile; validating/mutating webhooks stay on the admin kubeconfig and target the GVR, not the export name.
 
 **Architecture change vs first draft:** no write of tenant upstreams into `IdentityProviderConfiguration` in `root:orgs`. Org writes `IdPRegistration` in `root:orgs:<org>`; security-operator (admin kubeconfig) watches it and reconciles the Keycloak broker (+ Organizations) itself. IDPC stays for platform-managed realm bits (clients, seed/local Dex, flags). Alias ownership: IdPReg-managed aliases must not collide with IDPC/seed-managed ones.
 
